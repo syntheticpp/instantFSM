@@ -1,26 +1,3 @@
-
-/*
-Copyright (c) 2014 - Alexis Chol
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #ifndef INSTANTFSM_H
 #define INSTANTFSM_H
 
@@ -53,13 +30,17 @@ namespace ifsm{
     class StateImpl;
   }
 
-  class StateMachineException : public std::exception {
+  class StateMachineException : public std::logic_error {
+  protected:
+    StateMachineException(const std::string& pWhat)
+    : std::logic_error(pWhat){}
   };
 
   class AlreadyHasInitial : public StateMachineException{
   public:
     AlreadyHasInitial(const std::string& pState)
-      : mName(pState){
+      : StateMachineException("State "+pState+" has two children is initialTag parameter set. Only one initial child is permitted.")
+      , mName(pState){
 
     }
 
@@ -72,7 +53,8 @@ namespace ifsm{
   class DuplicateStateIdentifier : public StateMachineException{
   public:
     DuplicateStateIdentifier(const std::string& pState)
-      : mName(pState){
+      : StateMachineException("The StateMachine declares two States named "+pState+". Unique names are required.") 
+      , mName(pState){
 
     }
     virtual ~DuplicateStateIdentifier() NOEXCEPT{}
@@ -84,7 +66,8 @@ namespace ifsm{
   class NoInitialState : public StateMachineException{
   public:
     NoInitialState(const std::string& pState)
-      : mName(pState){
+      : StateMachineException("State "+pState+" is not parallel and doesn't have any initial child. One initial child is required for non-parallel nested States.")
+      , mName(pState){
 
     }
     virtual ~NoInitialState() NOEXCEPT{}
@@ -96,7 +79,8 @@ namespace ifsm{
   class NoSuchState : public StateMachineException{
   public:
     NoSuchState(const std::string& pState)
-      : mName(pState){
+      : StateMachineException("A transition targets a State named \""+pState+"\" which doesn't exist in the StateMachine.")
+      , mName(pState){
 
     }
 
@@ -110,7 +94,8 @@ namespace ifsm{
   class TargetAlreadySpecified : public StateMachineException{
   public:
     TargetAlreadySpecified(const std::string& pTarget)
-      : mTarget(pTarget){
+      : StateMachineException("A Transition defines two Targets. Only one Target() per Transition is allowed") 
+      , mTarget(pTarget){
 
     }
 
@@ -121,15 +106,24 @@ namespace ifsm{
   };
 
   class ActionAlreadySpecified : public StateMachineException{
-
+  public:
+    ActionAlreadySpecified()
+      : StateMachineException("A transition has two Action parameters defined. Only one is allowed.")
+      {}
   };
 
   class ConditionAlreadySpecified : public StateMachineException{
-
+  public:
+    ConditionAlreadySpecified()
+      : StateMachineException("A transition has two Condition parameters defined. Only one is allowed.")
+      {}
   };
 
   class EventAlreadySpecified : public StateMachineException{
-
+  public:
+    EventAlreadySpecified()
+      : StateMachineException("A transition has two OnEvent parameters defined. Only one is allowed.")
+      {}
   };
 }
 
@@ -632,6 +626,39 @@ namespace ifsm{
     */
     inline bool inState(const std::string& stateName);
 
+  private: //construction primitives
+#if 0
+    template <typename T1>
+    inline void gatherStateDefImpl(std::vector<priv::StateDef*>& pIn, T1& pParam1);
+    
+    inline void gatherStateDefImpl(std::vector<priv::StateDef*>& pIn, priv::StateDef& pParam1);
+    
+    inline void gatherStateDefs(std::vector<priv::StateDef*>& pIn){}
+    
+    template <typename T1>
+    inline void gatherStateDefs(std::vector<priv::StateDef*>& pIn, T1& pParam1);
+    
+    template <typename T1, typename... Params>
+    inline void gatherStateDefs(std::vector<priv::StateDef*>& pIn, T1& pParam1, Params&... pParams);
+    
+    inline void addParameter(priv::StateDef && pState);
+
+    inline void addParameter(priv::OnEntryAction && pAction);
+
+    inline void addParameter(priv::OnExitAction && pAction);
+
+    inline void addParameter(priv::TransitionDef && pTransition);
+
+    inline void addParameter(priv::parallelTag_t& pTag);
+
+    inline void addParameters(){}
+
+    template <class FirstP>
+    inline void addParameters(FirstP && pFirst);
+
+    template <class FirstP, typename... Params>
+    inline void addParameters(FirstP && pFirst, Params && ... pParameters);
+#endif
   private: // functioning primitives
     inline void processEvents();
 
@@ -1293,6 +1320,7 @@ bool ifsm::StateMachine::isActive() const{
 }
 
 void ifsm::StateMachine::pushEvent(const std::string& pEvent){
+  //TO DO : enqueue event, determine dispatch policy
   mEvents.push(pEvent);
   processEvents();
 }
@@ -1315,7 +1343,54 @@ bool ifsm::StateMachine::inState(const std::string& stateName){
 
   return false;
 }
+#if 0
+template <typename T1>
+void ifsm::StateMachine::gatherStateDefImpl(std::vector<priv::StateDef*>& pIn, T1& pParam1){}
 
+void ifsm::StateMachine::gatherStateDefImpl(std::vector<priv::StateDef*>& pIn, priv::StateDef& pParam1){
+  pIn.push_back(&pParam1);
+}
+
+template <typename T1>
+void ifsm::StateMachine::gatherStateDefs(std::vector<priv::StateDef*>& pIn, T1& pParam1){
+  gatherStateDefImpl(pIn, pParam1);
+}
+
+template <typename T1, typename... Params>
+void ifsm::StateMachine::gatherStateDefs(std::vector<priv::StateDef*>& pIn, T1& pParam1, Params&... pParams){
+  gatherStateDefImpl(pIn, pParam1);
+  gatherStateDefs(pIn, pParams...);
+}
+
+void ifsm::StateMachine::addParameter(priv::StateDef && pState){}
+
+void ifsm::StateMachine::addParameter(priv::OnEntryAction && pAction){
+  mOnEntryActions.emplace_back(std::move(pAction));
+}
+
+void ifsm::StateMachine::addParameter(priv::OnExitAction && pAction){
+  mOnExitActions.emplace_back(std::move(pAction));
+}
+
+void ifsm::StateMachine::addParameter(priv::TransitionDef && pTransition){
+  mTransitions.
+}
+
+void ifsm::StateMachine::addParameter(priv::parallelTag_t& ){
+  mIsParallel = true;
+}
+
+template <class FirstP>
+void ifsm::StateMachine::addParameters(FirstP && pFirst){
+  addParameter(std::forward<FirstP>(pFirst));
+}
+
+template <class FirstP, typename... Params>
+void ifsm::StateMachine::addParameters(FirstP && pFirst, Params && ... pParameters){
+  addParameter(std::forward<FirstP>(pFirst));
+  addParameters(std::forward<Params>(pParameters)...);
+}
+#endif
 /**************************************************/
 void ifsm::StateMachine::processEvents(){
   if (mInToplevelProcess){
@@ -1797,7 +1872,14 @@ void ifsm::priv::WidthFirstSearch::fetchNext(){
   }
   ifsm::priv::StateImpl* lCurrent = mFifo.front();
   mFifo.pop_front();
-
+  /*
+  
+  State::ChildrenMap::const_reverse_iterator lIt = mIterator.getStateChildren(lCurrent).crbegin();
+  State::ChildrenMap::const_reverse_iterator lItEnd = mIterator.getStateChildren(lCurrent).crend();
+  for (; lIt != lItEnd; ++lIt){
+    mFifo.push_back(lIt->second);
+  }
+  */
   for (auto& lChild : mIterator.getStateChildren(lCurrent)){
     mFifo.push_back(lChild);
   }
