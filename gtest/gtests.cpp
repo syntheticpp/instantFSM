@@ -10,6 +10,7 @@ Canonical
 */
 TEST(instantFSM, Canonical){
   StateMachine machine;
+  ASSERT_FALSE(machine.inState("root"));
   machine.enter();
   ASSERT_TRUE(machine.inState("root"));
   machine.leave();

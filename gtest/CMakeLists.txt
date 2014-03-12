@@ -17,7 +17,7 @@ if (NOT GTEST_FOUND)
 endif (NOT GTEST_FOUND)
 
 include_directories(
-  ../..
+  ..
   ${GTEST_INCLUDE_DIRS}
 )
 

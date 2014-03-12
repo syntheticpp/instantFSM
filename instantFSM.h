@@ -1,3 +1,51 @@
+
+/*
+Copyright (c) 2014 - Alexis Chol
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+/*
+Cheat Sheet : 
+
+StateMachine myMachine( parallelTag|State|OnEntry|OnExit|OnEvent|Transition ) 
+    : instantiate the FSM
+  myMachine.enter() : enter the root state
+  myMachine.pushEvent(std::string("myEvent")) : push an event
+  myMachine.inState(std::string("stateName")) : returns true of the named state is active
+  myMachine.leave() : quit all active states
+  
+State(std::string("stateName"), parallelTag|initialTag|State|OnEntry|OnExit|OnEvent|Transition) : create a state
+  
+  -> OnEntry( void(void) | void(StateMachine&) ) : callback triggered when parent state is entered
+  -> OnExit( void(void) | void(StateMachine&) ) : callback triggered when parent state is exited
+  -> OnEvent( std::string("myEvent"), void(void) | void(StateMachine&) ) : callback triggered when the event "myEvent" is pushed while the parent state is active.
+
+Transition( OnEvent|Target|Action|Condition ) : add a transition
+  -> OnEvent( std::string("myEvent") ) : event triggering the transition
+  -> Target( std::string("stateName") ) : state to activate when the transition is realised
+  -> Action( void(void)|void(StateMachine&) ) : callback triggered after leaving the parent state and before the target state is entered.
+  -> Condition( bool(void)|bool(StateMachine&) ) : callback preventing the transition from executing when it returns false
+  
+*/
+
+
 #ifndef INSTANTFSM_H
 #define INSTANTFSM_H
 
