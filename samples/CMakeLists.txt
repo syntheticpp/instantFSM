@@ -10,7 +10,10 @@ enable_testing()
 
 add_executable(audioPlayer audioPlayer.cpp)
 
+add_executable(gameState gameState.cpp)
+
 if (UNIX)
   target_link_libraries(audioPlayer stdc++)
+  target_link_libraries(gameState -pthread stdc++)
 endif (UNIX)
 
